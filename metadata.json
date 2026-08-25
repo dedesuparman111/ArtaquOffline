@@ -1,0 +1,8 @@
+{
+  "name": "ArtaQu",
+  "description": "Aplikasi manajemen keuangan pribadi PWA full offline dengan database lokal mandiri, fitur backup/restore JSON, dan desain mobile-first modern.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
