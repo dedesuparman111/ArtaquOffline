@@ -101,3 +101,22 @@ export interface DueReminderItem {
   dueDate: string;
   daysRemaining: number; // <= 0 means today or overdue, > 0 means upcoming in X days
 }
+
+export type LicenseTier = 'FREE' | 'PRO';
+
+export interface LicenseInfo {
+  tier: LicenseTier;
+  isPro: boolean;
+  licenseKey?: string;
+  activatedAt?: string;
+  customerName?: string;
+  deviceId: string;
+  expiryDate?: string | null; // null for lifetime
+}
+
+export interface UsageQuota {
+  transactions: { current: number; max: number; isUnlimited: boolean; isReached: boolean };
+  installments: { current: number; max: number; isUnlimited: boolean; isReached: boolean };
+  savings: { current: number; max: number; isUnlimited: boolean; isReached: boolean };
+  assets: { current: number; max: number; isUnlimited: boolean; isReached: boolean };
+}

@@ -4,15 +4,17 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { AppUser, Transaction, Installment, DashboardData, SavingsGoal, Asset, DueReminderItem } from './types';
+import { AppUser, Transaction, Installment, DashboardData, SavingsGoal, Asset, DueReminderItem, LicenseInfo } from './types';
 import { apiService } from './lib/supabase';
 import { notificationService } from './lib/notificationService';
+import { licenseService } from './lib/licenseService';
 import { Dashboard } from './components/Dashboard';
 import { Savings } from './components/Savings';
 import { Transactions } from './components/Transactions';
 import { Installments } from './components/Installments';
 import { Settings } from './components/Settings';
 import { Assets } from './components/Assets';
+import { ProModal } from './components/ProModal';
 import { 
   Layers, 
   Wallet, 
@@ -36,7 +38,8 @@ import {
   X,
   AlertTriangle,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Crown
 } from 'lucide-react';
 
 interface Toast {
@@ -89,6 +92,24 @@ export default function App() {
 
   // Notification Toast State
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // License & Pro Tier State
+  const [licenseInfo, setLicenseInfo] = useState<LicenseInfo>(() => licenseService.getLicenseInfo());
+  const [showProModal, setShowProModal] = useState(false);
+  const [proTriggerReason, setProTriggerReason] = useState<string | undefined>(undefined);
+
+  const handleOpenProModal = (reason?: string) => {
+    setProTriggerReason(reason);
+    setShowProModal(true);
+  };
+
+  // Live Quota Calculation
+  const quota = licenseService.getUsageQuota({
+    transactions: transactions.length,
+    installments: installments.length,
+    savings: savingsGoals.length,
+    assets: assets.length,
+  });
 
   // Show a beautifully animated non-intrusive toast
   const showToast = useCallback((title: string, message: string, type: 'success' | 'error' = 'success') => {
@@ -500,6 +521,27 @@ export default function App() {
 
           {/* Action Bar */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Pro Status / Upgrade Button */}
+            {licenseInfo.isPro ? (
+              <button
+                onClick={() => handleOpenProModal()}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-xl text-xs font-black hover:bg-amber-500/25 transition cursor-pointer shadow-xs"
+                title="ArtaQu PRO Aktif"
+              >
+                <Crown className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                <span className="text-[11px] uppercase tracking-wider">PRO</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => handleOpenProModal('Upgrade ke ArtaQu PRO Lifetime untuk akses unlimited tanpa batasan kuota!')}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95 animate-pulse hover:animate-none"
+                title="Buka Fitur PRO"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span className="text-[11px]">Upgrade PRO</span>
+              </button>
+            )}
+
             {/* Notification Bell Button */}
             <button
               onClick={() => setShowNotifModal(true)}
@@ -663,6 +705,8 @@ export default function App() {
               onDeleteTransaction={handleDeleteTransaction}
               showGlobalAdd={showGlobalAdd}
               onCloseGlobalAdd={() => setShowGlobalAdd(false)}
+              isPro={licenseInfo.isPro}
+              onOpenProModal={handleOpenProModal}
             />
           )}
 
@@ -676,6 +720,8 @@ export default function App() {
               onDeleteInstallment={handleDeleteInstallment}
               filterCreditor={filterCreditor}
               onSetFilterCreditor={setFilterCreditor}
+              isPro={licenseInfo.isPro}
+              onOpenProModal={handleOpenProModal}
             />
           )}
 
@@ -686,6 +732,8 @@ export default function App() {
               onAddGoal={handleAddSavingsGoal}
               onUpdateGoal={handleUpdateSavingsGoal}
               onDeleteGoal={handleDeleteSavingsGoal}
+              isPro={licenseInfo.isPro}
+              onOpenProModal={handleOpenProModal}
             />
           )}
 
@@ -699,6 +747,8 @@ export default function App() {
               onAddPlatform={handleAddPlatform}
               onUpdatePlatform={handleUpdatePlatform}
               onDeletePlatform={handleDeletePlatform}
+              isPro={licenseInfo.isPro}
+              onOpenProModal={handleOpenProModal}
             />
           )}
 
@@ -717,6 +767,9 @@ export default function App() {
               totalSavingsCount={savingsGoals.length}
               totalAssetsCount={assets.length}
               onTriggerTestNotification={handleTriggerTestNotification}
+              licenseInfo={licenseInfo}
+              quota={quota}
+              onOpenProModal={handleOpenProModal}
             />
           )}
         </div>
@@ -866,6 +919,25 @@ export default function App() {
         </div>
       )}
 
+
+      {/* ============================================================ */}
+      {/* ARTAQU PRO UPGRADE & ACTIVATION MODAL */}
+      {/* ============================================================ */}
+      <ProModal
+        isOpen={showProModal}
+        onClose={() => setShowProModal(false)}
+        licenseInfo={licenseInfo}
+        quota={quota}
+        onLicenseUpdated={(updatedInfo) => {
+          setLicenseInfo(updatedInfo);
+          showToast(
+            updatedInfo.isPro ? 'ArtaQu PRO Aktif!' : 'Lisensi Diperbarui',
+            updatedInfo.isPro ? 'Selamat! Semua batasan fitur telah diaktifkan tanpa batas.' : 'Status lisensi telah diperbarui.',
+            'success'
+          );
+        }}
+        triggerReason={proTriggerReason}
+      />
 
       {/* ============================================================ */}
       {/* REACT TOAST NOTIFICATIONS */}

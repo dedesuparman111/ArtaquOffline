@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Asset, AssetPlatform } from '../types';
-import { Plus, Edit2, Trash2, TrendingUp, TrendingDown, Briefcase, Bitcoin, BarChart3, Coins, X, ArrowDownToLine, ArrowUpFromLine, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, TrendingUp, TrendingDown, Briefcase, Bitcoin, BarChart3, Coins, X, ArrowDownToLine, ArrowUpFromLine, RefreshCw, ChevronDown, ChevronUp, Crown } from 'lucide-react';
+import { FREE_LIMITS } from '../lib/licenseService';
 
 interface AssetsProps {
   assets: Asset[];
@@ -11,10 +12,14 @@ interface AssetsProps {
   onAddPlatform: (platform: any) => Promise<boolean>;
   onUpdatePlatform: (id: string, updates: any) => Promise<boolean>;
   onDeletePlatform: (id: string) => Promise<boolean>;
+  isPro?: boolean;
+  onOpenProModal?: (reason?: string) => void;
 }
 
 export const Assets: React.FC<AssetsProps> = ({ 
-  assets, platforms, onAddAsset, onUpdateAsset, onDeleteAsset, onAddPlatform, onUpdatePlatform, onDeletePlatform 
+  assets, platforms, onAddAsset, onUpdateAsset, onDeleteAsset, onAddPlatform, onUpdatePlatform, onDeletePlatform,
+  isPro = false,
+  onOpenProModal,
 }) => {
   const [showPlatformForm, setShowPlatformForm] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<AssetPlatform | null>(null);
@@ -149,7 +154,24 @@ export const Assets: React.FC<AssetsProps> = ({
     <div className="space-y-6 pb-20 sm:pb-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Portofolio Aset</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Portofolio Aset</h2>
+            {isPro ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white uppercase shadow-xs flex items-center gap-1">
+                <Crown className="w-3 h-3" />
+                <span>PRO</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onOpenProModal && onOpenProModal('Upgrade ke PRO untuk mengelola platform aset tanpa batas.')}
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-850 hover:bg-amber-100 text-slate-600 dark:text-slate-400 hover:text-amber-700 transition cursor-pointer"
+                title="Batas Versi Gratis"
+              >
+                {safePlatforms.length}/{FREE_LIMITS.ASSETS} Free
+              </button>
+            )}
+          </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Kelola portofolio Anda di berbagai platform.</p>
         </div>
       </div>
@@ -172,8 +194,18 @@ export const Assets: React.FC<AssetsProps> = ({
           </div>
         </div>
         <button
-          onClick={() => { setEditingPlatform(null); setPlatformName(''); setShowPlatformForm(true); }}
-          className="mt-6 w-full py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+          onClick={() => {
+            if (!isPro && safePlatforms.length >= FREE_LIMITS.ASSETS) {
+              if (onOpenProModal) {
+                onOpenProModal(`Batas versi Gratis tercapai (${FREE_LIMITS.ASSETS} platform/aset). Upgrade ke ArtaQu PRO untuk menambah platform tanpa batas!`);
+              }
+              return;
+            }
+            setEditingPlatform(null);
+            setPlatformName('');
+            setShowPlatformForm(true);
+          }}
+          className="mt-6 w-full py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Tambah Platform / Broker
         </button>

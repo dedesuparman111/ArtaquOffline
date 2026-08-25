@@ -26,11 +26,18 @@ import {
   Bell,
   BellRing,
   BellOff,
-  Sparkles
+  Sparkles,
+  Crown,
+  KeyRound,
+  Check,
+  ChevronRight,
+  Zap,
+  Lock
 } from 'lucide-react';
 import { apiService, BackupPayload } from '../lib/supabase';
-import { AppUser, NotificationSetting } from '../types';
+import { AppUser, NotificationSetting, LicenseInfo, UsageQuota } from '../types';
 import { notificationService } from '../lib/notificationService';
+import { FREE_LIMITS } from '../lib/licenseService';
 
 interface SettingsProps {
   theme: 'light' | 'dark';
@@ -46,6 +53,9 @@ interface SettingsProps {
   totalSavingsCount: number;
   totalAssetsCount: number;
   onTriggerTestNotification?: () => void;
+  licenseInfo: LicenseInfo;
+  quota: UsageQuota;
+  onOpenProModal: (reason?: string) => void;
 }
 
 export const Settings: React.FC<SettingsProps> = ({
@@ -62,6 +72,9 @@ export const Settings: React.FC<SettingsProps> = ({
   totalSavingsCount,
   totalAssetsCount,
   onTriggerTestNotification,
+  licenseInfo,
+  quota,
+  onOpenProModal,
 }) => {
   // Notification Settings State
   const [notifSettings, setNotifSettings] = useState<NotificationSetting>(() => notificationService.getSettings());
@@ -313,6 +326,141 @@ export const Settings: React.FC<SettingsProps> = ({
             <span>💼 {totalAssetsCount} Aset</span>
           </div>
         </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 1. LISENSI APLIKASI & KUOTA PENGGUNAAN (FREE VS PRO) */}
+      {/* ============================================================ */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/70 p-5 sm:p-6 rounded-2xl shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <Crown className="w-4 h-4 text-amber-500" />
+            <span>Status Lisensi & Batas Kuota</span>
+          </h3>
+          {licenseInfo.isPro ? (
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-500 text-white uppercase shadow-xs flex items-center gap-1">
+              <Crown className="w-3 h-3" />
+              <span>PRO Lifetime</span>
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+              Versi Gratis (Free)
+            </span>
+          )}
+        </div>
+
+        {licenseInfo.isPro ? (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/60 dark:border-amber-700/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Lisensi Terverifikasi untuk {licenseInfo.customerName || 'Pengguna PRO'}</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                Key: {licenseInfo.licenseKey} • Device: {licenseInfo.deviceId}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onOpenProModal()}
+              className="px-3.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer shadow-xs"
+            >
+              Detail Lisensi
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  Pemakaian Kuota Versi Gratis:
+                </span>
+                <span className="text-slate-400 font-mono text-[10px]">ID: {licenseInfo.deviceId}</span>
+              </div>
+
+              {/* Progress bars for Free Limits */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs">
+                {/* Transaksi */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Transaksi:</span>
+                    <span className={`font-bold ${quota.transactions.isReached ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {quota.transactions.current} / {FREE_LIMITS.TRANSACTIONS}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${quota.transactions.isReached ? 'bg-rose-500' : 'bg-primary'}`}
+                      style={{ width: `${Math.min(100, (quota.transactions.current / FREE_LIMITS.TRANSACTIONS) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Cicilan */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Cicilan Aktif:</span>
+                    <span className={`font-bold ${quota.installments.isReached ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {quota.installments.current} / {FREE_LIMITS.INSTALLMENTS}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${quota.installments.isReached ? 'bg-rose-500' : 'bg-primary'}`}
+                      style={{ width: `${Math.min(100, (quota.installments.current / FREE_LIMITS.INSTALLMENTS) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tabungan */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Target Tabungan:</span>
+                    <span className={`font-bold ${quota.savings.isReached ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {quota.savings.current} / {FREE_LIMITS.SAVINGS}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${quota.savings.isReached ? 'bg-rose-500' : 'bg-primary'}`}
+                      style={{ width: `${Math.min(100, (quota.savings.current / FREE_LIMITS.SAVINGS) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Aset */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Portofolio Aset:</span>
+                    <span className={`font-bold ${quota.assets.isReached ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {quota.assets.current} / {FREE_LIMITS.ASSETS}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${quota.assets.isReached ? 'bg-rose-500' : 'bg-primary'}`}
+                      style={{ width: `${Math.min(100, (quota.assets.current / FREE_LIMITS.ASSETS) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Punya kode serial aktivasi? Masukkan kode untuk membuka akses tanpa batas.
+              </p>
+              <button
+                type="button"
+                onClick={() => onOpenProModal()}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Aktivasi / Beli Lisensi PRO</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ============================================================ */}

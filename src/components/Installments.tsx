@@ -5,7 +5,8 @@
 
 import React, { useState } from 'react';
 import { Installment } from '../types';
-import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X, Search } from 'lucide-react';
+import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X, Search, Crown } from 'lucide-react';
+import { FREE_LIMITS } from '../lib/licenseService';
 
 interface InstallmentsProps {
   installments: Installment[];
@@ -16,6 +17,8 @@ interface InstallmentsProps {
   onDeleteInstallment: (id: string) => Promise<void>;
   filterCreditor: string;
   onSetFilterCreditor: (creditor: string) => void;
+  isPro?: boolean;
+  onOpenProModal?: (reason?: string) => void;
 }
 
 export const Installments: React.FC<InstallmentsProps> = ({
@@ -27,6 +30,8 @@ export const Installments: React.FC<InstallmentsProps> = ({
   onDeleteInstallment,
   filterCreditor,
   onSetFilterCreditor,
+  isPro = false,
+  onOpenProModal,
 }) => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,6 +77,13 @@ export const Installments: React.FC<InstallmentsProps> = ({
 
   // Open add modal
   const handleOpenAddModal = () => {
+    if (!isPro && installments.length >= FREE_LIMITS.INSTALLMENTS) {
+      if (onOpenProModal) {
+        onOpenProModal(`Batas versi Gratis tercapai (${FREE_LIMITS.INSTALLMENTS} cicilan). Upgrade ke ArtaQu PRO untuk menambah cicilan tanpa batas!`);
+      }
+      return;
+    }
+
     setEditingInstallment(null);
     setName('');
     setCreditor('');
@@ -201,7 +213,24 @@ export const Installments: React.FC<InstallmentsProps> = ({
       {/* Header with Creditor Filter and Add Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Manajemen Cicilan</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Manajemen Cicilan</h2>
+            {isPro ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white uppercase shadow-xs flex items-center gap-1">
+                <Crown className="w-3 h-3" />
+                <span>PRO</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onOpenProModal && onOpenProModal('Upgrade ke PRO untuk mencatat cicilan tanpa batas.')}
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-850 hover:bg-amber-100 text-slate-600 dark:text-slate-400 hover:text-amber-700 transition cursor-pointer"
+                title="Batas Versi Gratis"
+              >
+                {installments.length}/{FREE_LIMITS.INSTALLMENTS} Free
+              </button>
+            )}
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">Total {installments.length} cicilan terdaftar</p>
         </div>
         
