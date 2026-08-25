@@ -123,62 +123,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* 2. MOBILE QUICK ACTIONS */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
-        <button
-          onClick={onQuickAddTransaction}
-          className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/70 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer text-center group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary group-hover:scale-110 transition-transform mb-1.5">
-            <PlusCircle className="w-5 h-5" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 leading-tight">
-            + Catat
-          </span>
-          <span className="text-[9px] text-slate-400">Transaksi</span>
-        </button>
-
-        <button
-          onClick={() => onNavigateTo?.('installments')}
-          className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/70 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer text-center group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform mb-1.5">
-            <CreditCard className="w-5 h-5" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 leading-tight">
-            Cicilan
-          </span>
-          <span className="text-[9px] text-slate-400">{installments.filter(i => i.status === 'Berjalan').length} Aktif</span>
-        </button>
-
-        <button
-          onClick={() => onNavigateTo?.('savings')}
-          className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/70 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer text-center group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform mb-1.5">
-            <Target className="w-5 h-5" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 leading-tight">
-            Target
-          </span>
-          <span className="text-[9px] text-slate-400">Tabungan</span>
-        </button>
-
-        <button
-          onClick={() => onNavigateTo?.('settings')}
-          className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/70 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer text-center group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform mb-1.5">
-            <Download className="w-5 h-5" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 leading-tight">
-            Backup
-          </span>
-          <span className="text-[9px] text-slate-400">JSON</span>
-        </button>
-      </div>
-
-      {/* 3. UPCOMING DUE DATES ALERT (IF ANY) */}
+      {/* 2. UPCOMING DUE DATES ALERT (IF ANY) */}
       {upcomingDueDates.length > 0 && (
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 space-y-2">
           <div className="flex items-center justify-between">

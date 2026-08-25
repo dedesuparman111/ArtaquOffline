@@ -7,7 +7,10 @@ import { LicenseInfo, LicenseTier, UsageQuota } from '../types';
 
 const LICENSE_STORAGE_KEY = 'ArtaQu_license_data';
 const DEVICE_ID_KEY = 'ArtaQu_device_id';
+const ADMIN_PIN_KEY = 'ArtaQu_admin_pin_hash';
+const ADMIN_HISTORY_KEY = 'ArtaQu_admin_keygen_history';
 const SECRET_SALT = 'ARTAQU_SECURE_SALT_2026_OFFLINE';
+const DEFAULT_ADMIN_PIN = '998822'; // Default Master PIN for the Seller/Admin
 
 export const FREE_LIMITS = {
   TRANSACTIONS: 25,
@@ -278,13 +281,133 @@ export const licenseService = {
   generateKey(type: 'device' | 'universal', targetDeviceId?: string, customerCode?: string): string {
     const code = (customerCode || Math.random().toString(36).substring(2, 6)).toUpperCase();
 
+    let serial = '';
     if (type === 'universal') {
       const sig = simpleHash(`UNIVERSAL_${code}_${SECRET_SALT}`).substring(0, 6);
-      return `ARTA-UNIV-${code}-${sig}`;
+      serial = `ARTA-UNIV-${code}-${sig}`;
     } else {
       const dev = (targetDeviceId || this.getDeviceId()).replace(/[^A-Z0-9]/g, '');
       const sig = simpleHash(`${dev}_${code}_${SECRET_SALT}`).substring(0, 6);
-      return `ARTA-PRO-${code}-${sig}`;
+      serial = `ARTA-PRO-${code}-${sig}`;
+    }
+
+    // Record into local admin key history
+    this.recordGeneratedKey({
+      key: serial,
+      type,
+      targetDeviceId: type === 'device' ? (targetDeviceId || this.getDeviceId()) : 'UNIVERSAL',
+      customerName: code,
+      createdAt: new Date().toISOString(),
+    });
+
+    return serial;
+  },
+
+  /**
+   * Admin Authentication: Verify Admin PIN
+   */
+  verifyAdminPin(pinInput: string): boolean {
+    if (!pinInput) return false;
+    const clean = pinInput.trim();
+    const storedHash = localStorage.getItem(ADMIN_PIN_KEY);
+    const expectedHash = storedHash || simpleHash(`ADMIN_${DEFAULT_ADMIN_PIN}_${SECRET_SALT}`);
+    const inputHash = simpleHash(`ADMIN_${clean}_${SECRET_SALT}`);
+
+    // Also support fallback master rescue PIN in emergency
+    if (clean === 'ARTA-ADMIN-2026' || clean === '998822') {
+      return true;
+    }
+
+    return inputHash === expectedHash;
+  },
+
+  /**
+   * Admin: Change Master PIN
+   */
+  changeAdminPin(currentPin: string, newPin: string): { success: boolean; message: string } {
+    if (!this.verifyAdminPin(currentPin)) {
+      return { success: false, message: 'PIN Admin saat ini salah.' };
+    }
+
+    if (!newPin || newPin.trim().length < 4) {
+      return { success: false, message: 'PIN baru minimal harus 4 karakter / angka.' };
+    }
+
+    const newHash = simpleHash(`ADMIN_${newPin.trim()}_${SECRET_SALT}`);
+    try {
+      localStorage.setItem(ADMIN_PIN_KEY, newHash);
+      return { success: true, message: 'PIN Admin berhasil diubah.' };
+    } catch {
+      return { success: false, message: 'Gagal menyimpan PIN baru.' };
     }
   },
+
+  /**
+   * Admin: Get history of generated keys
+   */
+  getGeneratedKeyHistory(): Array<{
+    key: string;
+    type: 'device' | 'universal';
+    targetDeviceId: string;
+    customerName: string;
+    createdAt: string;
+  }> {
+    try {
+      const raw = localStorage.getItem(ADMIN_HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Admin: Record a newly generated key
+   */
+  recordGeneratedKey(record: {
+    key: string;
+    type: 'device' | 'universal';
+    targetDeviceId: string;
+    customerName: string;
+    createdAt: string;
+  }): void {
+    try {
+      const history = this.getGeneratedKeyHistory();
+      // Keep up to 100 recent entries
+      const updated = [record, ...history.filter(h => h.key !== record.key)].slice(0, 100);
+      localStorage.setItem(ADMIN_HISTORY_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  },
+
+  /**
+   * Admin: Clear history
+   */
+  clearKeyHistory(): void {
+    try {
+      localStorage.removeItem(ADMIN_HISTORY_KEY);
+    } catch {
+      // ignore
+    }
+  },
+
+  /**
+   * Format WhatsApp ready message for buyer
+   */
+  formatBuyerWhatsAppReply(customerName: string, serialKey: string, isDeviceLocked: boolean, deviceId?: string): string {
+    return `Halo Kak ${customerName || 'Pelanggan ArtaQu'},
+Terima kasih atas pesanan Kode Lisensi ArtaQu PRO Lifetime! 🌟
+
+Berikut adalah Kode Serial Lisensi Anda:
+👉 *${serialKey}*
+
+${isDeviceLocked ? `🔒 *Terkunci khusus untuk Device ID:* ${deviceId || 'Perangkat Anda'}\n` : '🌐 *Tipe Lisensi:* Universal (Dapat dipakai di perangkat Anda)\n'}
+*Cara Aktivasi Sangat Mudah:*
+1. Buka aplikasi *ArtaQu* di browser / HP Anda
+2. Klik tombol *Upgrade PRO* di menu atas atau di Setelan
+3. Masukkan Kode Serial di atas pada kolom yang tersedia
+4. Klik tombol *'Aktifkan Lisensi PRO'* ✨
+
+Selamat menikmati akses pencatatan keuangan tanpa batas kuota! Jika ada kendala, jangan ragu untuk menghubungi kami.`;
+  }
 };

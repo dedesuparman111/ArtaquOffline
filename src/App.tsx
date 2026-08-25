@@ -15,6 +15,7 @@ import { Installments } from './components/Installments';
 import { Settings } from './components/Settings';
 import { Assets } from './components/Assets';
 import { ProModal } from './components/ProModal';
+import { AdminKeygenModal } from './components/AdminKeygenModal';
 import { 
   Layers, 
   Wallet, 
@@ -96,11 +97,63 @@ export default function App() {
   // License & Pro Tier State
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo>(() => licenseService.getLicenseInfo());
   const [showProModal, setShowProModal] = useState(false);
+  const [showAdminKeygenModal, setShowAdminKeygenModal] = useState(false);
   const [proTriggerReason, setProTriggerReason] = useState<string | undefined>(undefined);
 
   const handleOpenProModal = (reason?: string) => {
     setProTriggerReason(reason);
     setShowProModal(true);
+  };
+
+  // Secret URL & Shortcut Listener for Admin Keygen Portal
+  useEffect(() => {
+    const checkAdminTrigger = () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hasAdminParam = 
+        searchParams.get('admin') === 'portal' || 
+        searchParams.get('admin') === 'keygen' || 
+        searchParams.get('admin') === '1' || 
+        searchParams.get('secret') === 'artaqu';
+      const hasAdminHash = 
+        window.location.hash === '#admin' || 
+        window.location.hash === '#admin-keygen' || 
+        window.location.hash === '#keygen';
+      
+      if (hasAdminParam || hasAdminHash) {
+        setShowAdminKeygenModal(true);
+      }
+    };
+
+    checkAdminTrigger();
+    window.addEventListener('popstate', checkAdminTrigger);
+    window.addEventListener('hashchange', checkAdminTrigger);
+
+    // Secret Admin Shortcut: Ctrl + Shift + A / Cmd + Shift + A
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setShowAdminKeygenModal((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('popstate', checkAdminTrigger);
+      window.removeEventListener('hashchange', checkAdminTrigger);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const handleCloseAdminKeygen = () => {
+    setShowAdminKeygenModal(false);
+    // Clean up query or hash cleanly
+    if (
+      window.location.search.includes('admin') || 
+      window.location.search.includes('secret') || 
+      window.location.hash.includes('admin')
+    ) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   };
 
   // Live Quota Calculation
@@ -940,6 +993,15 @@ export default function App() {
       />
 
       {/* ============================================================ */}
+      {/* ARTAQU PRO ADMIN / SELLER LICENSE GENERATOR CONSOLE */}
+      {/* ============================================================ */}
+      <AdminKeygenModal
+        isOpen={showAdminKeygenModal}
+        onClose={handleCloseAdminKeygen}
+        defaultDeviceId={licenseInfo.deviceId}
+      />
+
+      {/* ============================================================ */}
       {/* REACT TOAST NOTIFICATIONS */}
       {/* ============================================================ */}
       <div className="fixed top-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none max-w-xs sm:max-w-sm w-full px-3">
@@ -974,87 +1036,113 @@ export default function App() {
       {/* ============================================================ */}
       <nav 
         id="mobile-bottom-nav" 
-        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-100 dark:border-slate-800/80 px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] h-[70px] pb-safe"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800/80 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] h-[66px] pb-safe"
       >
-        <div className="flex justify-between items-center h-full max-w-md mx-auto relative px-1">
-          {/* Dashboard */}
+        <div className="grid grid-cols-6 items-center h-full max-w-md mx-auto">
+          {/* 1. Dashboard */}
           <button
             onClick={() => setActiveView('dashboard')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
               activeView === 'dashboard' 
                 ? 'text-primary' 
                 : 'text-slate-400 dark:text-slate-500 hover:text-primary'
             }`}
+            title="Beranda"
           >
-            <div className={`transition-transform duration-200 ${activeView === 'dashboard' ? '-translate-y-0.5' : ''}`}>
-              <Home className={`w-5 h-5 ${activeView === 'dashboard' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <div className={`transition-transform duration-200 ${activeView === 'dashboard' ? '-translate-y-0.5 scale-105' : ''}`}>
+              <Home className={`w-4.5 h-4.5 ${activeView === 'dashboard' ? 'stroke-[2.5]' : 'stroke-2'}`} />
             </div>
-            <span className={`text-[10px] font-bold mt-1 transition-all ${activeView === 'dashboard' ? 'text-primary' : 'text-slate-400'}`}>
+            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'dashboard' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
               Beranda
             </span>
           </button>
 
-          {/* Transactions */}
+          {/* 2. Transactions */}
           <button
             onClick={() => setActiveView('transactions')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
               activeView === 'transactions' 
                 ? 'text-primary' 
                 : 'text-slate-400 dark:text-slate-500 hover:text-primary'
             }`}
+            title="Transaksi"
           >
-            <div className={`transition-transform duration-200 ${activeView === 'transactions' ? '-translate-y-0.5' : ''}`}>
-              <ArrowRightLeft className={`w-5 h-5 ${activeView === 'transactions' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <div className={`transition-transform duration-200 ${activeView === 'transactions' ? '-translate-y-0.5 scale-105' : ''}`}>
+              <ArrowRightLeft className={`w-4.5 h-4.5 ${activeView === 'transactions' ? 'stroke-[2.5]' : 'stroke-2'}`} />
             </div>
-            <span className={`text-[10px] font-bold mt-1 transition-all ${activeView === 'transactions' ? 'text-primary' : 'text-slate-400'}`}>
+            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'transactions' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
               Transaksi
             </span>
           </button>
 
-          {/* Center Floating Add Button */}
-          <div className="flex-1 flex justify-center items-center h-full relative">
-            <button
-              onClick={() => {
-                setActiveView('transactions');
-                setShowGlobalAdd(true);
-              }}
-              className="absolute -top-3 w-12 h-12 bg-gradient-to-tr from-primary to-indigo-600 hover:from-primary-hover hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-primary/40 transition-all active:scale-90 flex items-center justify-center group z-50 border-4 border-white dark:border-slate-900 cursor-pointer"
-              title="Catat Transaksi"
-            >
-              <Plus className="w-6 h-6 stroke-[3]" />
-            </button>
-          </div>
-
-          {/* Installments */}
+          {/* 3. Installments */}
           <button
             onClick={() => setActiveView('installments')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
               activeView === 'installments' 
                 ? 'text-primary' 
                 : 'text-slate-400 dark:text-slate-500 hover:text-primary'
             }`}
+            title="Cicilan"
           >
-            <div className={`transition-transform duration-200 ${activeView === 'installments' ? '-translate-y-0.5' : ''}`}>
-              <CreditCard className={`w-5 h-5 ${activeView === 'installments' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <div className={`transition-transform duration-200 ${activeView === 'installments' ? '-translate-y-0.5 scale-105' : ''}`}>
+              <CreditCard className={`w-4.5 h-4.5 ${activeView === 'installments' ? 'stroke-[2.5]' : 'stroke-2'}`} />
             </div>
-            <span className={`text-[10px] font-bold mt-1 transition-all ${activeView === 'installments' ? 'text-primary' : 'text-slate-400'}`}>
+            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'installments' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
               Cicilan
             </span>
           </button>
 
-          {/* Settings & Backup */}
+          {/* 4. Savings (Target Tabungan) */}
+          <button
+            onClick={() => setActiveView('savings')}
+            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
+              activeView === 'savings' 
+                ? 'text-primary' 
+                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
+            }`}
+            title="Target Tabungan"
+          >
+            <div className={`transition-transform duration-200 ${activeView === 'savings' ? '-translate-y-0.5 scale-105' : ''}`}>
+              <Target className={`w-4.5 h-4.5 ${activeView === 'savings' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            </div>
+            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'savings' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
+              Target
+            </span>
+          </button>
+
+          {/* 5. Assets (Aset Digital) */}
+          <button
+            onClick={() => setActiveView('assets')}
+            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
+              activeView === 'assets' 
+                ? 'text-primary' 
+                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
+            }`}
+            title="Aset Digital"
+          >
+            <div className={`transition-transform duration-200 ${activeView === 'assets' ? '-translate-y-0.5 scale-105' : ''}`}>
+              <Briefcase className={`w-4.5 h-4.5 ${activeView === 'assets' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            </div>
+            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'assets' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
+              Aset
+            </span>
+          </button>
+
+          {/* 6. Settings & Backup */}
           <button
             onClick={() => setActiveView('settings')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
               activeView === 'settings' 
                 ? 'text-primary' 
                 : 'text-slate-400 dark:text-slate-500 hover:text-primary'
             }`}
+            title="Setelan"
           >
-            <div className={`transition-transform duration-200 ${activeView === 'settings' ? '-translate-y-0.5' : ''}`}>
-              <SettingsIcon className={`w-5 h-5 ${activeView === 'settings' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <div className={`transition-transform duration-200 ${activeView === 'settings' ? '-translate-y-0.5 scale-105' : ''}`}>
+              <SettingsIcon className={`w-4.5 h-4.5 ${activeView === 'settings' ? 'stroke-[2.5]' : 'stroke-2'}`} />
             </div>
-            <span className={`text-[10px] font-bold mt-1 transition-all ${activeView === 'settings' ? 'text-primary' : 'text-slate-400'}`}>
+            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'settings' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
               Setelan
             </span>
           </button>
