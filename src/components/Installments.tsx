@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Installment } from '../types';
-import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X, Search, Crown } from 'lucide-react';
+import { Installment, Transaction } from '../types';
+import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X, Search, Crown, ArrowDownRight, Wallet, Check } from 'lucide-react';
 import { FREE_LIMITS } from '../lib/licenseService';
 
 interface InstallmentsProps {
@@ -15,6 +15,7 @@ interface InstallmentsProps {
   onAddInstallment: (inst: Omit<Installment, 'id' | 'remaining' | 'paid_amount' | 'status'>) => Promise<boolean>;
   onEditInstallment: (inst: Installment) => Promise<boolean>;
   onDeleteInstallment: (id: string) => Promise<void>;
+  onAddTransaction?: (trx: Omit<Transaction, 'id'>) => Promise<boolean>;
   filterCreditor: string;
   onSetFilterCreditor: (creditor: string) => void;
   isPro?: boolean;
@@ -28,14 +29,24 @@ export const Installments: React.FC<InstallmentsProps> = ({
   onAddInstallment,
   onEditInstallment,
   onDeleteInstallment,
+  onAddTransaction,
   filterCreditor,
   onSetFilterCreditor,
   isPro = false,
   onOpenProModal,
 }) => {
-  // Modal State
+  // Modal State for Add / Edit Installment
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
+
+  // Modal State for Pay Installment (Bayar Cicilan)
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payingInstallment, setPayingInstallment] = useState<Installment | null>(null);
+  const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
+  const [payAmount, setPayAmount] = useState('');
+  const [payDescription, setPayDescription] = useState('');
+  const [isPaying, setIsPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   // Form State
   const [name, setName] = useState('');
@@ -110,6 +121,71 @@ export const Installments: React.FC<InstallmentsProps> = ({
     setReceiptUrl(inst.receipt_url || '');
     setFormError(null);
     setIsModalOpen(true);
+  };
+
+  // Open pay installment modal (Bayar Cicilan Langsung)
+  const handleOpenPayModal = (inst: Installment) => {
+    setPayingInstallment(inst);
+    setPayDate(new Date().toISOString().split('T')[0]);
+    // Pre-fill with remaining amount if reasonable or let user type
+    setPayAmount(inst.remaining > 0 ? inst.remaining.toString() : '');
+    setPayDescription(`Bayar cicilan ${inst.name} (${inst.creditor})`);
+    setPayError(null);
+    setIsPayModalOpen(true);
+  };
+
+  // Submit Pay Installment (Creates a Cicilan Transaction)
+  const handlePaySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payingInstallment) return;
+
+    setPayError(null);
+    const amountNum = parseFloat(payAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setPayError('Jumlah pembayaran harus lebih besar dari Rp 0.');
+      return;
+    }
+
+    setIsPaying(true);
+
+    try {
+      if (onAddTransaction) {
+        const success = await onAddTransaction({
+          date: payDate,
+          type: 'Cicilan',
+          category: 'Pembayaran Cicilan',
+          amount: amountNum,
+          description: payDescription || `Bayar cicilan ${payingInstallment.name}`,
+          installment_id: payingInstallment.id,
+        });
+
+        if (success) {
+          setIsPayModalOpen(false);
+          setPayingInstallment(null);
+        } else {
+          setPayError('Gagal mencatat pembayaran cicilan.');
+        }
+      } else {
+        // Fallback to updating installment directly if onAddTransaction not supplied
+        const newPaid = payingInstallment.paid_amount + amountNum;
+        const newRemaining = Math.max(0, payingInstallment.total_amount - newPaid);
+        const success = await onEditInstallment({
+          ...payingInstallment,
+          paid_amount: newPaid,
+          remaining: newRemaining,
+          status: newRemaining <= 0 ? 'Lunas' : 'Berjalan',
+        });
+
+        if (success) {
+          setIsPayModalOpen(false);
+          setPayingInstallment(null);
+        }
+      }
+    } catch (err: any) {
+      setPayError(err.message || 'Terjadi kesalahan saat memproses pembayaran.');
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   // Submit form
@@ -376,7 +452,17 @@ export const Installments: React.FC<InstallmentsProps> = ({
                           </span>
                         </td>
                         <td className="px-6 py-4.5 whitespace-nowrap text-center">
-                          <div className="flex gap-2 justify-center">
+                          <div className="flex gap-1.5 justify-center items-center">
+                            {!isLunas && (
+                              <button
+                                onClick={() => handleOpenPayModal(inst)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
+                                title="Bayar Cicilan Ini"
+                              >
+                                <Wallet className="w-3.5 h-3.5" />
+                                <span>Bayar</span>
+                              </button>
+                            )}
                             {inst.receipt_url && (
                               <button
                                 onClick={() => setViewReceipt(inst.receipt_url!)}
@@ -389,7 +475,7 @@ export const Installments: React.FC<InstallmentsProps> = ({
                             <button
                               onClick={() => handleOpenEditModal(inst)}
                               className="p-2 text-primary hover:bg-primary-light dark:hover:bg-primary-light rounded-lg cursor-pointer transition-colors"
-                              title="Edit / Bayar"
+                              title="Edit Data Cicilan"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -456,7 +542,17 @@ export const Installments: React.FC<InstallmentsProps> = ({
                           </span>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 items-center">
+                        {!isLunas && (
+                          <button
+                            onClick={() => handleOpenPayModal(inst)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
+                            title="Bayar Cicilan Ini"
+                          >
+                            <Wallet className="w-3.5 h-3.5" />
+                            <span>Bayar</span>
+                          </button>
+                        )}
                         {inst.receipt_url && (
                           <button
                             onClick={() => setViewReceipt(inst.receipt_url!)}
@@ -469,13 +565,14 @@ export const Installments: React.FC<InstallmentsProps> = ({
                         <button
                           onClick={() => handleOpenEditModal(inst)}
                           className="p-2 text-primary hover:bg-primary-light rounded-lg cursor-pointer"
-                          title="Edit / Bayar"
+                          title="Edit Data Cicilan"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDeleteInstallment(inst.id)}
                           className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
+                          title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -699,6 +796,178 @@ export const Installments: React.FC<InstallmentsProps> = ({
                   className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary-hover text-white rounded-lg font-semibold text-sm transition-all duration-300 shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <span>{isSubmitting ? 'Menyimpan...' : 'Simpan'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pay Installment Modal (Bayar Cicilan Langsung) */}
+      {isPayModalOpen && payingInstallment && (
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden border border-slate-100 dark:border-slate-800 transition-all duration-300">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                    Bayar Cicilan
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    Tercatat otomatis sebagai transaksi pengeluaran cicilan
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsPayModalOpen(false);
+                  setPayingInstallment(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handlePaySubmit} className="p-6 space-y-4 overflow-y-auto">
+              {payError && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{payError}</span>
+                </div>
+              )}
+
+              {/* Installment Info Box */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
+                      {payingInstallment.name}
+                    </h4>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Kreditur: <span className="font-bold text-slate-700 dark:text-slate-300">{payingInstallment.creditor}</span>
+                    </p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40">
+                    {payingInstallment.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-xs">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold block">Total Pinjaman</span>
+                    <span className="font-extrabold text-slate-800 dark:text-slate-200">{formatRupiah(payingInstallment.total_amount)}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-400 text-[10px] uppercase font-bold block">Sisa Tagihan</span>
+                    <span className="font-black text-rose-600 dark:text-rose-400">{formatRupiah(payingInstallment.remaining)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+                  Tanggal Pembayaran
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    required
+                    value={payDate}
+                    onChange={(e) => setPayDate(e.target.value)}
+                    onKeyDown={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if ('showPicker' in target) {
+                        try { target.showPicker(); } catch (err) {}
+                      }
+                    }}
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm dark:bg-slate-950 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    Jumlah Bayar (Rp)
+                  </label>
+                  {payingInstallment.remaining > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPayAmount(payingInstallment.remaining.toString())}
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      Bayar Lunas ({formatRupiah(payingInstallment.remaining)})
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    Rp
+                  </div>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    placeholder="Contoh: 750000"
+                    autoFocus
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm dark:bg-slate-950 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-black text-slate-900"
+                  />
+                </div>
+                {payAmount && !isNaN(parseFloat(payAmount)) && (
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                    Terformat: {formatRupiah(parseFloat(payAmount))}
+                  </p>
+                )}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+                  Keterangan Transaksi
+                </label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                  <textarea
+                    rows={2}
+                    value={payDescription}
+                    onChange={(e) => setPayDescription(e.target.value)}
+                    placeholder="Contoh: Bayar cicilan ke-5 via transfer BCA"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm dark:bg-slate-950 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPayModalOpen(false);
+                    setPayingInstallment(null);
+                  }}
+                  className="px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-semibold text-sm transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPaying}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-sm transition shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{isPaying ? 'Memproses...' : 'Konfirmasi Bayar'}</span>
                 </button>
               </div>
             </form>

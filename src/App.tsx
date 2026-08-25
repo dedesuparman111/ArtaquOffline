@@ -16,6 +16,7 @@ import { Settings } from './components/Settings';
 import { Assets } from './components/Assets';
 import { ProModal } from './components/ProModal';
 import { AdminKeygenModal } from './components/AdminKeygenModal';
+import { AppMenuGridModal } from './components/AppMenuGridModal';
 import { 
   Layers, 
   Wallet, 
@@ -40,7 +41,9 @@ import {
   AlertTriangle,
   ChevronRight,
   ExternalLink,
-  Crown
+  Crown,
+  LayoutGrid,
+  ArrowLeft
 } from 'lucide-react';
 
 interface Toast {
@@ -59,6 +62,7 @@ export default function App() {
   });
   const [activeView, setActiveView] = useState<'dashboard' | 'transactions' | 'installments' | 'savings' | 'assets' | 'settings'>('dashboard');
   const [showGlobalAdd, setShowGlobalAdd] = useState(false);
+  const [showAppMenuGrid, setShowAppMenuGrid] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Notification State
@@ -554,26 +558,52 @@ export default function App() {
       <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-100 dark:border-slate-800/60 sticky top-0 z-40 transition-all duration-300">
         <div className="max-w-4xl mx-auto px-4 h-15 sm:h-16 flex items-center justify-between gap-3">
           
-          {/* Brand Logo and Offline Pill */}
+          {/* Brand Logo & Back to Home Button */}
           <div className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
-            <img src="/logo.png" alt="ArtaQu Logo" className="w-9 h-9 object-contain rounded-xl shadow-xs" />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base text-slate-900 dark:text-slate-100 tracking-tight leading-none">
-                  ArtaQu
-                </span>
-                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                  Offline
-                </span>
+            {activeView !== 'dashboard' ? (
+              <button
+                onClick={() => setActiveView('dashboard')}
+                className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary rounded-xl text-xs font-black transition cursor-pointer active:scale-95 shadow-2xs"
+                title="Kembali ke Beranda"
+              >
+                <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+                <span>Beranda</span>
+              </button>
+            ) : (
+              <div 
+                onClick={() => setActiveView('dashboard')}
+                className="flex items-center gap-2.5 cursor-pointer select-none"
+              >
+                <img src="/logo.png" alt="ArtaQu Logo" className="w-9 h-9 object-contain rounded-xl shadow-xs" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-base text-slate-900 dark:text-slate-100 tracking-tight leading-none">
+                      ArtaQu
+                    </span>
+                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                      Offline
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium truncate max-w-[130px] sm:max-w-[200px] leading-tight mt-0.5">
+                    {user?.username || 'Penyimpanan Lokal'}
+                  </p>
+                </div>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium truncate max-w-[130px] sm:max-w-[200px] leading-tight mt-0.5">
-                {user?.username || 'Database Lokal'}
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Action Bar */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* App Menu Grid Launcher (Mobile, Tablet, Desktop) */}
+            <button
+              onClick={() => setShowAppMenuGrid(true)}
+              className="flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
+              title="Buka Menu Grid Aplikasi"
+            >
+              <LayoutGrid className="w-4 h-4 text-primary" />
+              <span className="hidden md:inline text-xs font-extrabold">Menu Grid</span>
+            </button>
+
             {/* Pro Status / Upgrade Button */}
             {licenseInfo.isPro ? (
               <button
@@ -609,21 +639,11 @@ export default function App() {
               )}
             </button>
 
-            {/* Quick 1-Click Backup Button */}
-            <button
-              onClick={handleQuickBackup}
-              className="p-2 sm:px-3 sm:py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
-              title="Download Backup JSON"
-            >
-              <Download className="w-4 h-4 text-primary" />
-              <span className="hidden sm:inline">Backup JSON</span>
-            </button>
-
             {/* Refresh Core Data */}
             <button
               onClick={handleManualRefresh}
               className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
-              title="Segarkan Database"
+              title="Segarkan Data"
             >
               <RefreshCw className={`w-4.5 h-4.5 ${loading ? 'animate-spin text-primary' : ''}`} />
             </button>
@@ -639,7 +659,7 @@ export default function App() {
               { id: 'installments', label: 'Cicilan',  icon: <CreditCard className="w-4 h-4" /> },
               { id: 'savings', label: 'Target',  icon: <Target className="w-4 h-4" /> },
               { id: 'assets', label: 'Aset Digital',  icon: <Briefcase className="w-4 h-4" /> },
-              { id: 'settings', label: 'Setelan & Backup', icon: <SettingsIcon className="w-4 h-4" /> },
+              { id: 'settings', label: 'Setelan', icon: <SettingsIcon className="w-4 h-4" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -661,7 +681,30 @@ export default function App() {
       {/* ============================================================ */}
       {/* MAIN CONTAINER */}
       {/* ============================================================ */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-28 sm:pb-12">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-10 sm:pb-12">
+        
+        {/* Back Navigation Bar (When inside sub-menu in all devices) */}
+        {activeView !== 'dashboard' && (
+          <div className="mb-4 flex items-center justify-between gap-2 p-2 sm:p-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xs animate-fade-in">
+            <button
+              onClick={() => setActiveView('dashboard')}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
+            >
+              <ArrowLeft className="w-4 h-4 text-primary" />
+              <span>Kembali ke Beranda</span>
+            </button>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 pr-2">
+              <span className="text-slate-400 font-medium">Menu /</span>
+              <span className="text-slate-800 dark:text-slate-200 font-black">
+                {activeView === 'transactions' && 'Transaksi'}
+                {activeView === 'installments' && 'Cicilan & Utang'}
+                {activeView === 'savings' && 'Target Tabungan'}
+                {activeView === 'assets' && 'Aset Digital'}
+                {activeView === 'settings' && 'Setelan & Data'}
+              </span>
+            </div>
+          </div>
+        )}
         
         {/* Urgent Installments Reminder Banner */}
         {dueInstallments.length > 0 && !dismissedBanner && (
@@ -771,6 +814,7 @@ export default function App() {
               onAddInstallment={handleAddInstallment}
               onEditInstallment={handleEditInstallment}
               onDeleteInstallment={handleDeleteInstallment}
+              onAddTransaction={handleAddTransaction}
               filterCreditor={filterCreditor}
               onSetFilterCreditor={setFilterCreditor}
               isPro={licenseInfo.isPro}
@@ -974,6 +1018,29 @@ export default function App() {
 
 
       {/* ============================================================ */}
+      {/* APP MENU GRID LAUNCHER MODAL (ALL PLATFORMS) */}
+      {/* ============================================================ */}
+      <AppMenuGridModal
+        isOpen={showAppMenuGrid}
+        onClose={() => setShowAppMenuGrid(false)}
+        activeView={activeView}
+        onNavigate={(view) => {
+          setActiveView(view);
+          setShowAppMenuGrid(false);
+        }}
+        onOpenProModal={() => handleOpenProModal()}
+        onOpenNotifModal={() => setShowNotifModal(true)}
+        onQuickAddTransaction={() => {
+          setActiveView('transactions');
+          setShowGlobalAdd(true);
+        }}
+        isProUser={licenseInfo.isPro}
+        dueInstallmentsCount={dueInstallments.length}
+        totalSavingsCount={savingsGoals.length}
+        totalAssetsCount={assets.length}
+      />
+
+      {/* ============================================================ */}
       {/* ARTAQU PRO UPGRADE & ACTIVATION MODAL */}
       {/* ============================================================ */}
       <ProModal
@@ -1030,124 +1097,6 @@ export default function App() {
           </div>
         ))}
       </div>
-
-      {/* ============================================================ */}
-      {/* MOBILE BOTTOM NAVIGATION BAR (MOBILE FIRST UX) */}
-      {/* ============================================================ */}
-      <nav 
-        id="mobile-bottom-nav" 
-        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800/80 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] h-[66px] pb-safe"
-      >
-        <div className="grid grid-cols-6 items-center h-full max-w-md mx-auto">
-          {/* 1. Dashboard */}
-          <button
-            onClick={() => setActiveView('dashboard')}
-            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
-              activeView === 'dashboard' 
-                ? 'text-primary' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
-            }`}
-            title="Beranda"
-          >
-            <div className={`transition-transform duration-200 ${activeView === 'dashboard' ? '-translate-y-0.5 scale-105' : ''}`}>
-              <Home className={`w-4.5 h-4.5 ${activeView === 'dashboard' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            </div>
-            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'dashboard' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
-              Beranda
-            </span>
-          </button>
-
-          {/* 2. Transactions */}
-          <button
-            onClick={() => setActiveView('transactions')}
-            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
-              activeView === 'transactions' 
-                ? 'text-primary' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
-            }`}
-            title="Transaksi"
-          >
-            <div className={`transition-transform duration-200 ${activeView === 'transactions' ? '-translate-y-0.5 scale-105' : ''}`}>
-              <ArrowRightLeft className={`w-4.5 h-4.5 ${activeView === 'transactions' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            </div>
-            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'transactions' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
-              Transaksi
-            </span>
-          </button>
-
-          {/* 3. Installments */}
-          <button
-            onClick={() => setActiveView('installments')}
-            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
-              activeView === 'installments' 
-                ? 'text-primary' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
-            }`}
-            title="Cicilan"
-          >
-            <div className={`transition-transform duration-200 ${activeView === 'installments' ? '-translate-y-0.5 scale-105' : ''}`}>
-              <CreditCard className={`w-4.5 h-4.5 ${activeView === 'installments' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            </div>
-            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'installments' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
-              Cicilan
-            </span>
-          </button>
-
-          {/* 4. Savings (Target Tabungan) */}
-          <button
-            onClick={() => setActiveView('savings')}
-            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
-              activeView === 'savings' 
-                ? 'text-primary' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
-            }`}
-            title="Target Tabungan"
-          >
-            <div className={`transition-transform duration-200 ${activeView === 'savings' ? '-translate-y-0.5 scale-105' : ''}`}>
-              <Target className={`w-4.5 h-4.5 ${activeView === 'savings' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            </div>
-            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'savings' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
-              Target
-            </span>
-          </button>
-
-          {/* 5. Assets (Aset Digital) */}
-          <button
-            onClick={() => setActiveView('assets')}
-            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
-              activeView === 'assets' 
-                ? 'text-primary' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
-            }`}
-            title="Aset Digital"
-          >
-            <div className={`transition-transform duration-200 ${activeView === 'assets' ? '-translate-y-0.5 scale-105' : ''}`}>
-              <Briefcase className={`w-4.5 h-4.5 ${activeView === 'assets' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            </div>
-            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'assets' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
-              Aset
-            </span>
-          </button>
-
-          {/* 6. Settings & Backup */}
-          <button
-            onClick={() => setActiveView('settings')}
-            className={`flex flex-col items-center justify-center h-full py-1 transition-all cursor-pointer ${
-              activeView === 'settings' 
-                ? 'text-primary' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-primary'
-            }`}
-            title="Setelan"
-          >
-            <div className={`transition-transform duration-200 ${activeView === 'settings' ? '-translate-y-0.5 scale-105' : ''}`}>
-              <SettingsIcon className={`w-4.5 h-4.5 ${activeView === 'settings' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            </div>
-            <span className={`text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-full ${activeView === 'settings' ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}`}>
-              Setelan
-            </span>
-          </button>
-        </div>
-      </nav>
     </div>
   );
 }

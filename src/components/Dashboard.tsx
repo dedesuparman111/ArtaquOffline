@@ -19,7 +19,11 @@ import {
   HardDrive,
   Download,
   Target,
-  ArrowRight
+  ArrowRight,
+  LayoutGrid,
+  ArrowRightLeft,
+  Briefcase,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -123,7 +127,125 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* 2. UPCOMING DUE DATES ALERT (IF ANY) */}
+      {/* 2. APP MENU GRID (RESPONSIVE: MOBILE 3-COL, TABLET/DESKTOP 6-COL) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LayoutGrid className="w-4 h-4 text-primary" />
+            <h3 className="font-extrabold text-xs sm:text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+              Menu Utama Aplikasi
+            </h3>
+          </div>
+          <span className="text-[10px] text-slate-400 font-semibold hidden sm:inline">
+            Akses Cepat Modul
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3">
+          {/* 1. Transaksi */}
+          <button
+            onClick={() => onNavigateTo?.('transactions')}
+            className="group p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15 border border-slate-100 dark:border-slate-800 hover:border-emerald-500/40 transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110">
+              <ArrowRightLeft className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+              Transaksi
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 hidden sm:block truncate max-w-full">
+              Arus Kas
+            </span>
+          </button>
+
+          {/* 2. Cicilan */}
+          <button
+            onClick={() => onNavigateTo?.('installments')}
+            className="group relative p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 hover:bg-amber-500/10 dark:hover:bg-amber-500/15 border border-slate-100 dark:border-slate-800 hover:border-amber-500/40 transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 shadow-2xs"
+          >
+            {upcomingDueDates.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-xs">
+                {upcomingDueDates.length}
+              </span>
+            )}
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400">
+              Cicilan
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 hidden sm:block truncate max-w-full">
+              Jadwal Bayar
+            </span>
+          </button>
+
+          {/* 3. Target Tabungan */}
+          <button
+            onClick={() => onNavigateTo?.('savings')}
+            className="group p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 hover:bg-violet-500/10 dark:hover:bg-violet-500/15 border border-slate-100 dark:border-slate-800 hover:border-violet-500/40 transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110">
+              <Target className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-violet-600 dark:group-hover:text-violet-400">
+              Target
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 hidden sm:block truncate max-w-full">
+              Tabungan
+            </span>
+          </button>
+
+          {/* 4. Aset Digital */}
+          <button
+            onClick={() => onNavigateTo?.('assets')}
+            className="group p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 hover:bg-indigo-500/10 dark:hover:bg-indigo-500/15 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/40 transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+              Aset Digital
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 hidden sm:block truncate max-w-full">
+              Portofolio
+            </span>
+          </button>
+
+          {/* 5. Setelan & Data */}
+          <button
+            onClick={() => onNavigateTo?.('settings')}
+            className="group p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 hover:bg-blue-500/10 dark:hover:bg-blue-500/15 border border-slate-100 dark:border-slate-800 hover:border-blue-500/40 transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110">
+              <SettingsIcon className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+              Setelan
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 hidden sm:block truncate max-w-full">
+              Preferensi
+            </span>
+          </button>
+
+          {/* 6. Catat Cepat */}
+          <button
+            onClick={onQuickAddTransaction || (() => onNavigateTo?.('transactions'))}
+            className="group p-3 sm:p-3.5 rounded-2xl bg-primary/5 hover:bg-primary/15 dark:bg-primary/10 dark:hover:bg-primary/20 border border-primary/20 hover:border-primary/50 transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110 shadow-xs">
+              <PlusCircle className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-primary dark:text-primary">
+              Catat Baru
+            </span>
+            <span className="text-[10px] text-primary/70 dark:text-primary/70 mt-0.5 hidden sm:block truncate max-w-full">
+              Pemasukan/Keluar
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3. UPCOMING DUE DATES ALERT (IF ANY) */}
       {upcomingDueDates.length > 0 && (
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 space-y-2">
           <div className="flex items-center justify-between">

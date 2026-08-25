@@ -9,30 +9,22 @@ import {
   Sun, 
   Moon, 
   Palette, 
-  Database, 
   Trash2, 
   Download, 
   Upload, 
-  FileJson, 
   CheckCircle2, 
   AlertCircle, 
   User, 
-  Smartphone, 
   HardDrive, 
-  ShieldCheck,
   RefreshCw,
-  Info,
   Clock,
   Bell,
   BellRing,
-  BellOff,
-  Sparkles,
   Crown,
-  KeyRound,
-  Check,
-  ChevronRight,
-  Zap,
-  Lock
+  Lock,
+  Archive,
+  Sparkles,
+  KeyRound
 } from 'lucide-react';
 import { apiService, BackupPayload } from '../lib/supabase';
 import { AppUser, NotificationSetting, LicenseInfo, UsageQuota } from '../types';
@@ -159,18 +151,6 @@ export const Settings: React.FC<SettingsProps> = ({
     setTimeout(() => setNotifSuccessMsg(null), 4000);
   };
 
-  const handleTestNotification = () => {
-    if (onTriggerTestNotification) {
-      onTriggerTestNotification();
-    } else {
-      notificationService.sendBrowserNotification('ArtaQu: Uji Coba Pengingat', {
-        body: 'Notifikasi browser berfungsi dengan baik. Cicilan Anda akan diingatkan tepat waktu.',
-      });
-    }
-    setNotifSuccessMsg('Uji coba notifikasi telah dikirim.');
-    setTimeout(() => setNotifSuccessMsg(null), 3500);
-  };
-
   const colors = [
     { name: 'blue', value: '#2563eb', label: 'Classic Blue' },
     { name: 'orange', value: '#f97316', label: 'Neon Orange' },
@@ -201,8 +181,8 @@ export const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-  // Handle Export Backup JSON
-  const handleExportJSON = async () => {
+  // Handle Export Backup
+  const handleExportBackup = async () => {
     setIsExporting(true);
     setExportSuccess(false);
     setExportError(null);
@@ -291,10 +271,10 @@ export const Settings: React.FC<SettingsProps> = ({
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
             <SettingsIcon className="w-6 h-6 text-primary" />
-            <span>Pengaturan & Database</span>
+            <span>Pengaturan & Data</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            PWA Full Offline • Kelola database lokal, backup JSON, dan profil
+            PWA Full Offline • Kelola penyimpanan lokal, cadangan data, dan profil
           </p>
         </div>
       </div>
@@ -307,14 +287,14 @@ export const Settings: React.FC<SettingsProps> = ({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
-              Database Lokal Mandiri (IndexedDB)
+              Penyimpanan Lokal Mandiri
             </h3>
             <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-emerald-600 text-white rounded-full">
               100% Offline
             </span>
           </div>
           <p className="text-xs text-emerald-700/90 dark:text-emerald-300/80 mt-1 leading-relaxed">
-            Semua data tersimpan aman langsung di perangkat Anda tanpa perlu koneksi internet. Anda dapat mencadangkan (backup) data ke format file JSON kapan saja agar tidak hilang saat berganti perangkat.
+            Semua data tersimpan aman langsung di perangkat Anda tanpa perlu koneksi internet. Anda dapat mencadangkan data ke berkas cadangan kapan saja agar tidak hilang saat berganti perangkat.
           </p>
           <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
             <span>📊 {totalTransactionsCount} Transaksi</span>
@@ -464,25 +444,25 @@ export const Settings: React.FC<SettingsProps> = ({
       </div>
 
       {/* ============================================================ */}
-      {/* 1. BACKUP & RESTORE DATABASE (JSON) */}
+      {/* 2. CADANGKAN & PULIHKAN DATA */}
       {/* ============================================================ */}
       <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/70 p-5 sm:p-6 rounded-2xl shadow-sm space-y-5">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <FileJson className="w-4 h-4 text-primary" />
-            <span>Cadangkan & Pulihkan (Backup JSON)</span>
+            <Archive className="w-4 h-4 text-primary" />
+            <span>Cadangkan & Pulihkan Data</span>
           </h3>
         </div>
 
         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-          Gunakan fitur ini untuk memindahkan seluruh data keuangan Anda ke perangkat lain (HP baru, laptop, tablet) atau menyimpan arsip berkala secara offline.
+          Gunakan fitur ini untuk memindahkan seluruh data keuangan Anda ke perangkat lain (HP baru, laptop, tablet) atau menyimpan arsip berkala secara mandiri.
         </p>
 
         {/* Action Buttons Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          {/* Export JSON Button */}
+          {/* Export Button */}
           <button
-            onClick={handleExportJSON}
+            onClick={handleExportBackup}
             disabled={isExporting}
             className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-md transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
           >
@@ -491,13 +471,13 @@ export const Settings: React.FC<SettingsProps> = ({
             ) : (
               <Download className="w-4 h-4" />
             )}
-            <span>{isExporting ? 'Membuat Cadangan...' : 'Download Backup (JSON)'}</span>
+            <span>{isExporting ? 'Membuat Cadangan...' : 'Unduh Cadangan Data'}</span>
           </button>
 
-          {/* Import JSON Button */}
+          {/* Import Button */}
           <label className="flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 border-dashed border-primary/40 hover:border-primary bg-primary-light/30 hover:bg-primary-light text-primary dark:text-primary font-bold text-xs transition-all active:scale-[0.98] cursor-pointer">
             <Upload className="w-4 h-4" />
-            <span>Upload / Pulihkan File JSON</span>
+            <span>Unggah & Pulihkan Data</span>
             <input
               ref={fileInputRef}
               type="file"
@@ -520,7 +500,7 @@ export const Settings: React.FC<SettingsProps> = ({
         {exportSuccess && (
           <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 animate-fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
-            <span>Berkas backup JSON berhasil diunduh ke perangkat Anda! Simpan berkas ini dengan aman.</span>
+            <span>Berkas cadangan data berhasil diunduh ke perangkat Anda! Simpan berkas ini dengan aman.</span>
           </div>
         )}
 
@@ -545,8 +525,8 @@ export const Settings: React.FC<SettingsProps> = ({
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-primary/30 space-y-3.5 animate-fade-in">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <FileJson className="w-4 h-4 text-primary" />
-                <span>Pratinjau File Cadangan:</span>
+                <Archive className="w-4 h-4 text-primary" />
+                <span>Pratinjau Berkas Cadangan:</span>
               </span>
               <span className="text-[10px] text-slate-500 font-mono">
                 {new Date(pendingBackup.exportedAt).toLocaleDateString('id-ID')}
@@ -748,9 +728,9 @@ export const Settings: React.FC<SettingsProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons for Permissions & Testing */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            {browserPermission !== 'granted' && (
+          {/* Action Buttons for Permissions */}
+          {browserPermission !== 'granted' && (
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={handleRequestPermission}
@@ -759,17 +739,8 @@ export const Settings: React.FC<SettingsProps> = ({
                 <BellRing className="w-3.5 h-3.5" />
                 <span>Minta Izin Notifikasi Browser</span>
               </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleTestNotification}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Uji Coba Pengingat</span>
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -892,7 +863,7 @@ export const Settings: React.FC<SettingsProps> = ({
       </div>
 
       {/* ============================================================ */}
-      {/* 5. DANGER ZONE / RESET LOCAL DATABASE */}
+      {/* 5. DANGER ZONE / RESET LOCAL DATA */}
       {/* ============================================================ */}
       <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-red-950/30 p-5 sm:p-6 rounded-2xl shadow-sm">
         <h3 className="font-bold text-sm text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-2">
@@ -900,12 +871,12 @@ export const Settings: React.FC<SettingsProps> = ({
           <span>Zona Bahaya</span>
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed font-medium">
-          Tindakan di bawah ini akan mengosongkan seluruh database lokal di perangkat ini. Pastikan Anda telah mengunduh cadangan (Backup JSON) terlebih dahulu jika masih ingin menyimpan data.
+          Tindakan di bawah ini akan mengosongkan seluruh data lokal di perangkat ini. Pastikan Anda telah mengunduh cadangan data terlebih dahulu jika masih ingin menyimpan data.
         </p>
 
         {resetSuccess && (
           <div className="mb-4 p-3 rounded-xl border border-emerald-100 bg-emerald-50 dark:bg-emerald-950/10 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-            ✓ Seluruh database lokal berhasil dikosongkan!
+            ✓ Seluruh data lokal berhasil dikosongkan!
           </div>
         )}
 
@@ -914,12 +885,12 @@ export const Settings: React.FC<SettingsProps> = ({
             onClick={() => setShowResetConfirm(true)}
             className="px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40 rounded-xl font-bold text-xs transition cursor-pointer"
           >
-            Kosongkan Database Lokal
+            Kosongkan Penyimpanan Lokal
           </button>
         ) : (
           <form onSubmit={handleVerifyAndReset} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-4">
             <p className="text-xs font-extrabold text-slate-800 dark:text-slate-200 leading-normal">
-              ⚠️ Konfirmasi Pengosongan Database: Masukkan PIN Keamanan (Bantuan: 399339 atau 000000) untuk melanjutkan.
+              ⚠️ Konfirmasi Pengosongan Data: Masukkan PIN Keamanan (Bantuan: 399339 atau 000000) untuk melanjutkan.
             </p>
             
             <div className="max-w-xs">
