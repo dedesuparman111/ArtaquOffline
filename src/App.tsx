@@ -649,62 +649,12 @@ export default function App() {
             </button>
           </div>
         </div>
-
-        {/* Navigation Tabs (Desktop only) */}
-        <div className="hidden sm:block border-t border-slate-100 dark:border-slate-800/40">
-          <div className="max-w-4xl mx-auto px-4 flex gap-1">
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: <Layers className="w-4 h-4" /> },
-              { id: 'transactions', label: 'Transaksi', icon: <Wallet className="w-4 h-4" /> },
-              { id: 'installments', label: 'Cicilan',  icon: <CreditCard className="w-4 h-4" /> },
-              { id: 'savings', label: 'Target',  icon: <Target className="w-4 h-4" /> },
-              { id: 'assets', label: 'Aset Digital',  icon: <Briefcase className="w-4 h-4" /> },
-              { id: 'settings', label: 'Setelan', icon: <SettingsIcon className="w-4 h-4" /> },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveView(tab.id as any)}
-                className={`px-4 py-2.5 text-xs font-bold tracking-wide flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
-                  activeView === tab.id
-                    ? 'border-primary text-primary dark:text-primary'
-                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </header>
 
       {/* ============================================================ */}
       {/* MAIN CONTAINER */}
       {/* ============================================================ */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-10 sm:pb-12">
-        
-        {/* Back Navigation Bar (When inside sub-menu in all devices) */}
-        {activeView !== 'dashboard' && (
-          <div className="mb-4 flex items-center justify-between gap-2 p-2 sm:p-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xs animate-fade-in">
-            <button
-              onClick={() => setActiveView('dashboard')}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
-            >
-              <ArrowLeft className="w-4 h-4 text-primary" />
-              <span>Kembali ke Beranda</span>
-            </button>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 pr-2">
-              <span className="text-slate-400 font-medium">Menu /</span>
-              <span className="text-slate-800 dark:text-slate-200 font-black">
-                {activeView === 'transactions' && 'Transaksi'}
-                {activeView === 'installments' && 'Cicilan & Utang'}
-                {activeView === 'savings' && 'Target Tabungan'}
-                {activeView === 'assets' && 'Aset Digital'}
-                {activeView === 'settings' && 'Setelan & Data'}
-              </span>
-            </div>
-          </div>
-        )}
         
         {/* Urgent Installments Reminder Banner */}
         {dueInstallments.length > 0 && !dismissedBanner && (
